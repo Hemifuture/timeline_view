@@ -1,0 +1,6 @@
+name = "timeline_view"
+account_id = "8bafdbd1f2d967917dbc0a67156266fa"
+main = "dist/_worker.js"     # Vue + Vite 4.x 默认产物，按实际调整
+compatibility_date = "2025-05-31"
+[site]
+bucket = "./dist"

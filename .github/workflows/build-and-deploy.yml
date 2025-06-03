@@ -1,0 +1,46 @@
+name: Build & Deploy Vue site to Cloudflare Workers
+
+on:
+  repository_dispatch:
+    types: [data-updated]
+
+permissions: # 细粒度权限，增强安全
+  contents: read
+  id-token: write
+  actions: write # 允许后续 job 调用其它 API（可选）
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    concurrency: site-production # 避免并发发布
+
+    steps:
+      # 1. 检出站点代码
+      - uses: actions/checkout@v4
+
+      # 2. 检出最新数据到子目录 data/
+      - uses: actions/checkout@v4
+        with:
+          repository: Hemifuture/timeline
+          ref: ${{ github.event.client_payload.sha }} # 精确到触发提交
+          token: ${{ secrets.DISPATCH_TOKEN }} # 同一个 PAT 即可
+          path: data
+
+      # 3. 把 data/* 拷到你站点期望的位置
+      - name: Sync data into src/assets
+        run: |
+          rsync -a --delete data/ src/assets/data/
+
+      # 4. 安装依赖 & 构建
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+
+      # 5. 部署到 Cloudflare Workers
+      - name: Publish with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }} # workers.write 等权限
+          # 若 wrangler.toml 中定义了环境，可加:
+          # environment: production
