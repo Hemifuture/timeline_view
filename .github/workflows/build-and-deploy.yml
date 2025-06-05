@@ -32,7 +32,7 @@ jobs:
       # 3. 把 data/* 拷到你站点期望的位置
       - name: Sync data into src/assets
         run: |
-          rsync -a --delete data/ src/assets/data/
+          rsync -a --delete data/ public/data/
 
       # 4. 安装依赖 & 构建
       - name: Install dependencies

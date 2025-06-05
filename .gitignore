@@ -28,3 +28,5 @@ coverage
 *.sw?
 
 .yalc/
+
+public/data

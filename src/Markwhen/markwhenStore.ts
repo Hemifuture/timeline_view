@@ -65,11 +65,13 @@ export const useMarkwhenStore = defineStore("markwhen", () => {
 
   watchEffect(async () => {
     const { user, timeline } = route.params;
+    console.log(user, timeline);
     if (user) {
       try {
-        const url = timeline
-          ? `https://meridiem.markwhen.com/${user}/${timeline}.mw`
-          : `https://meridiem.markwhen.com/${user}.mw`;
+        // const url = timeline
+        //   ? `https://meridiem.markwhen.com/${user}/${timeline}.mw`
+        //   : `https://meridiem.markwhen.com/${user}.mw`;
+        const url = `/data/${user}.mw`;
         const resp = await fetch(url).catch(() => {});
         if (resp) {
           if (resp.redirected) {
