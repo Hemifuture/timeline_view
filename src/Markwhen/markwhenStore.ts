@@ -1,6 +1,6 @@
 import { equivalentPaths, type EventPath } from "@/Timeline/paths";
 import { defineStore } from "pinia";
-import { computed, ref, watchEffect } from "vue";
+import { computed, ref, watchEffect, onMounted } from "vue";
 import {
   useLpc,
   type AppState,
@@ -13,13 +13,11 @@ import type {
   DateTimeGranularity,
 } from "@markwhen/parser";
 import type { DisplayScale } from "@/Timeline/utilities/dateTimeUtilities";
-import { useRoute } from "vue-router";
 import { parse } from "@markwhen/parser";
 import { useColors } from "./useColors";
 import type { EventGroup } from "@markwhen/parser";
 
 export const useMarkwhenStore = defineStore("markwhen", () => {
-  const route = useRoute();
   const app = ref<AppState>({ colorMap: { default: {} } });
   const markwhen = ref<MarkwhenState>();
   const showEditButton = ref(false);
@@ -44,71 +42,38 @@ export const useMarkwhenStore = defineStore("markwhen", () => {
     return "";
   });
 
-  const pathOrHash = computed(() => {
-    const { user, timeline } = route.params;
-    if (!route.path.includes(".html") && user) {
-      return `/${user}` + (timeline ? `/${timeline}` : "");
-    }
-    if (app.value?.path && app.value.path !== "/") {
-      return app.value.path;
-    }
-    return `#mw=${hash.value}`;
-  });
-
-  const editorLink = computed(
-    () => `https://meridiem.markwhen.com${pathOrHash.value}`
-  );
   const timelineLink = computed(
-    () => `https://timeline.markwhen.com${pathOrHash.value}`
+    () => `https://timeline.markwhen.com#mw=${hash.value}`
+  );
+  const editorLink = computed(
+    () => `https://meridiem.markwhen.com#mw=${hash.value}`
   );
   const embedLink = computed(() => `<iframe src="${timelineLink.value}" />`);
 
-  watchEffect(async () => {
-    const { user, timeline } = route.params;
-    console.log(user, timeline);
-    if (user) {
-      try {
-        // const url = timeline
-        //   ? `https://meridiem.markwhen.com/${user}/${timeline}.mw`
-        //   : `https://meridiem.markwhen.com/${user}.mw`;
-        const url = `/data/${user}.mw`;
-        const resp = await fetch(url).catch(() => {});
-        if (resp) {
-          if (resp.redirected) {
-            window.location.href = resp.url;
-          }
-          if (resp.ok) {
-            const text = await resp.text();
-            const mw = parse(text);
-            app.value = {
-              isDark: false,
-              colorMap: useColors(mw).value,
-            };
-            markwhen.value = {
-              rawText: text,
-              parsed: mw,
-              transformed: mw.events as Sourced<EventGroup>,
-            };
-            showEditButton.value = true;
-            showCopyLinkButton.value = false;
-          }
-        }
-      } catch {}
-    } else if (route.hash && route.hash.startsWith("#mw=")) {
-      const decoded = atob(route.hash.substring("#mw=".length));
-      const mw = parse(decoded);
-      app.value = {
-        isDark: false,
-        colorMap: useColors(mw).value,
-      };
-      markwhen.value = {
-        rawText: decoded,
-        parsed: mw,
-        transformed: mw.events as Sourced<EventGroup>,
-      };
-      showEditButton.value = true;
-      showCopyLinkButton.value = false;
-    }
+  onMounted(async () => {
+    try {
+      // 根据当前环境决定加载哪个文件，DEV 加载 test.mw，PROD 加载 all.mw
+      const url =
+        import.meta.env.MODE === "development"
+          ? "/data/test.mw"
+          : "/data/all.mw";
+      const resp = await fetch(url).catch(() => {});
+      if (resp && resp.ok) {
+        const text = await resp.text();
+        const mw = parse(text);
+        app.value = {
+          isDark: false,
+          colorMap: useColors(mw).value,
+        };
+        markwhen.value = {
+          rawText: text,
+          parsed: mw,
+          transformed: mw.events as Sourced<EventGroup>,
+        };
+        showEditButton.value = true;
+        showCopyLinkButton.value = false;
+      }
+    } catch {}
   });
 
   const { postRequest } = useLpc({
