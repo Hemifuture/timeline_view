@@ -3,6 +3,9 @@ name: Build & Deploy Vue site to Cloudflare Workers
 on:
   repository_dispatch:
     types: [data-updated]
+  push:
+    branches:
+      - main
 
 permissions: # 细粒度权限，增强安全
   contents: read
