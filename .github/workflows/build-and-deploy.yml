@@ -21,26 +21,21 @@ jobs:
       # 1. 检出站点代码
       - uses: actions/checkout@v4
 
-      # 2. 检出最新数据到子目录 data/
+      # 2. 检出最新数据到子目录 public/data/
       - uses: actions/checkout@v4
         with:
           repository: Hemifuture/timeline
           ref: ${{ github.event.client_payload.sha }} # 精确到触发提交
           token: ${{ secrets.DISPATCH_TOKEN }} # 同一个 PAT 即可
-          path: data
+          path: public/data
 
-      # 3. 把 data/* 拷到你站点期望的位置
-      - name: Sync data into src/assets
-        run: |
-          rsync -a --delete data/ public/data/
-
-      # 4. 安装依赖 & 构建
+      # 3. 安装依赖 & 构建
       - name: Install dependencies
         run: npm ci
       - name: Build
         run: npm run build
 
-      # 5. 部署到 Cloudflare Workers
+      # 4. 部署到 Cloudflare Workers
       - name: Publish with Wrangler
         uses: cloudflare/wrangler-action@v3
         with:

@@ -53,10 +53,11 @@ export const useMarkwhenStore = defineStore("markwhen", () => {
   onMounted(async () => {
     try {
       // 根据当前环境决定加载哪个文件，DEV 加载 test.mw，PROD 加载 all.mw
-      const url =
-        import.meta.env.MODE === "development"
-          ? "/data/test.mw"
-          : "/data/all.mw";
+      // const url =
+      //   import.meta.env.MODE === "development"
+      //     ? "/data/test.mw"
+      //     : "/data/all.mw";
+      const url = "/data/all.mw";
       const resp = await fetch(url).catch(() => {});
       if (resp && resp.ok) {
         const text = await resp.text();
